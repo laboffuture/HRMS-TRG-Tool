@@ -1,0 +1,110 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <!-- Claim Header -->
+    <div class="oh-card mb-3">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Claim Details" %}</h6></div>
+      <div class="oh-card__body">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.employee.label }}</label>
+            {{ form.employee }}
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.travel_request.label }}</label>
+            {{ form.travel_request }}
+            <small class="text-muted">{% trans "Optional — link to a travel request" %}</small>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.claim_date.label }}</label>
+            {{ form.claim_date }}
+          </div>
+          <div class="col-12">
+            <label class="oh-label">{{ form.remarks.label }}</label>
+            {{ form.remarks }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense Line Items -->
+    <div class="oh-card mb-4">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Expense Lines" %}</h6></div>
+      <div class="oh-card__body">
+        {{ formset.management_form }}
+        <div id="expense-lines">
+          {% for detail_form in formset %}
+          <div class="expense-line border rounded p-3 mb-3 bg-light">
+            {% if detail_form.instance.pk %}{{ detail_form.id }}{% endif %}
+            <div class="row g-2 align-items-end">
+              <div class="col-6 col-md-2">
+                <label class="oh-label small">{% trans "Date" %}</label>
+                {{ detail_form.expense_date }}
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="oh-label small">{% trans "Type" %}</label>
+                {{ detail_form.expense_type }}
+              </div>
+              <div class="col-12 col-md-3">
+                <label class="oh-label small">{% trans "Description" %}</label>
+                {{ detail_form.description }}
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="oh-label small">{% trans "Amount (₹)" %}</label>
+                {{ detail_form.amount_claimed }}
+              </div>
+              <div class="col-6 col-md-2">
+                <label class="oh-label small">{% trans "Receipt" %}</label>
+                {{ detail_form.receipt }}
+              </div>
+              <div class="col-6 col-md-1 d-flex align-items-end">
+                <div class="form-check">
+                  {{ detail_form.billable }}
+                  <label class="form-check-label small" for="{{ detail_form.billable.id_for_label }}">{% trans "Billable" %}</label>
+                </div>
+              </div>
+              {% if formset.can_delete %}
+              <div class="col-6 col-md-1 d-flex align-items-end">
+                <div class="form-check">
+                  {{ detail_form.DELETE }}
+                  <label class="form-check-label small text-danger" for="{{ detail_form.DELETE.id_for_label }}">{% trans "Remove" %}</label>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="text-muted small mt-2">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          {% trans "Fill as many lines as needed. Leave empty rows blank — they will be ignored." %}
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="oh-btn oh-btn--primary">{% trans "Save Claim" %}</button>
+      <a href="{% url 'travel-my-expense-claims' %}" class="oh-btn oh-btn--secondary">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

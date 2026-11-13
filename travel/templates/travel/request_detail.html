@@ -1,0 +1,248 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <!-- Header -->
+  <div class="oh-titlebar d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h4 class="oh-titlebar__title mb-0">
+        {% trans "Travel Request" %} #{{ travel_request.pk }}
+      </h4>
+      <span class="oh-badge
+        {% if travel_request.status == 'approved' or travel_request.status == 'completed' %}oh-badge--success
+        {% elif travel_request.status == 'rejected' or travel_request.status == 'cancelled' %}oh-badge--danger
+        {% elif travel_request.status == 'booked' %}oh-badge--info
+        {% elif travel_request.status == 'draft' %}oh-badge--secondary
+        {% else %}oh-badge--warning{% endif %}">
+        {{ travel_request.get_status_display }}
+      </span>
+    </div>
+    <div class="d-flex gap-2">
+      {% if is_owner and travel_request.status == 'draft' %}
+        <a href="{% url 'travel-request-update' travel_request.pk %}" class="oh-btn oh-btn--secondary oh-btn--sm">
+          {% trans "Edit" %}
+        </a>
+        <a href="{% url 'travel-request-submit' travel_request.pk %}"
+           class="oh-btn oh-btn--primary oh-btn--sm"
+           onclick="return confirm('{% trans "Submit for HR review?" %}')">
+          {% trans "Submit" %}
+        </a>
+      {% endif %}
+      {% if travel_request.status not in 'completed,cancelled,rejected' %}
+        <a href="{% url 'travel-request-cancel' travel_request.pk %}"
+           class="oh-btn oh-btn--danger oh-btn--sm"
+           onclick="return confirm('{% trans "Cancel this travel request?" %}')">
+          {% trans "Cancel" %}
+        </a>
+      {% endif %}
+      {% if can_validate and travel_request.status == 'pending_hr' %}
+        <a href="{% url 'travel-approve-action' travel_request.pk %}" class="oh-btn oh-btn--warning oh-btn--sm">
+          {% trans "Take Action (HR)" %}
+        </a>
+      {% endif %}
+      {% if can_approve and travel_request.status in 'pending_manager,pending_hod' %}
+        <a href="{% url 'travel-approve-action' travel_request.pk %}" class="oh-btn oh-btn--warning oh-btn--sm">
+          {% trans "Take Action" %}
+        </a>
+      {% endif %}
+      {% if can_book and travel_request.status == 'approved' and not booking %}
+        <a href="{% url 'travel-booking-create' travel_request.pk %}" class="oh-btn oh-btn--success oh-btn--sm">
+          {% trans "Create Booking" %}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+
+    <!-- Left column — request details -->
+    <div class="col-12 col-lg-8">
+
+      <!-- Employee Info -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Traveller" %}</h6></div>
+        <div class="oh-card__body">
+          <div class="row g-2">
+            <div class="col-6"><span class="text-muted small">{% trans "Name" %}</span><br><strong>{{ travel_request.employee_name }}</strong></div>
+            <div class="col-6"><span class="text-muted small">{% trans "Department" %}</span><br>{{ travel_request.department }}</div>
+            <div class="col-6"><span class="text-muted small">{% trans "Designation" %}</span><br>{{ travel_request.designation }}</div>
+            <div class="col-6"><span class="text-muted small">{% trans "Contact" %}</span><br>{{ travel_request.contact_number|default:"—" }}</div>
+            {% if travel_request.passport_number %}
+            <div class="col-6"><span class="text-muted small">{% trans "Passport" %}</span><br>{{ travel_request.passport_number }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Trip Details -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Trip Details" %}</h6></div>
+        <div class="oh-card__body">
+          <div class="row g-2">
+            <div class="col-6"><span class="text-muted small">{% trans "From" %}</span><br><strong>{{ travel_request.travel_from }}</strong></div>
+            <div class="col-6"><span class="text-muted small">{% trans "To" %}</span><br><strong>{{ travel_request.travel_to }}</strong></div>
+            <div class="col-6"><span class="text-muted small">{% trans "Departure" %}</span><br>{{ travel_request.departure_date|date:"d M Y, H:i" }}</div>
+            <div class="col-6"><span class="text-muted small">{% trans "Return" %}</span><br>{{ travel_request.return_date|date:"d M Y, H:i"|default:"—" }}</div>
+            <div class="col-4"><span class="text-muted small">{% trans "Type" %}</span><br>{{ travel_request.get_travel_type_display }}</div>
+            <div class="col-4"><span class="text-muted small">{% trans "Mode" %}</span><br>{{ travel_request.get_mode_of_travel_display }}</div>
+            <div class="col-4"><span class="text-muted small">{% trans "Class" %}</span><br>{{ travel_request.get_travel_class_display }}</div>
+            <div class="col-12"><span class="text-muted small">{% trans "Purpose" %}</span><br>{{ travel_request.purpose }}</div>
+            {% if travel_request.description %}
+            <div class="col-12"><span class="text-muted small">{% trans "Details" %}</span><br>{{ travel_request.description }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Lodging -->
+      {% if travel_request.lodging_required %}
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Lodging Request" %}</h6></div>
+        <div class="oh-card__body">
+          <div class="row g-2">
+            <div class="col-6"><span class="text-muted small">{% trans "Preferred Area" %}</span><br>{{ travel_request.preferred_location|default:"—" }}</div>
+            <div class="col-3"><span class="text-muted small">{% trans "Check-in" %}</span><br>{{ travel_request.check_in_date|date:"d M Y"|default:"—" }}</div>
+            <div class="col-3"><span class="text-muted small">{% trans "Check-out" %}</span><br>{{ travel_request.check_out_date|date:"d M Y"|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Advance -->
+      {% if travel_request.advance_required %}
+      <div class="oh-card mb-3">
+        <div class="oh-card__header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">{% trans "Advance Requested" %}</h6>
+          <a href="{% url 'travel-advance-create' travel_request.pk %}" class="oh-btn oh-btn--sm oh-btn--primary">{% trans "+ Issue Advance" %}</a>
+        </div>
+        <div class="oh-card__body">
+          <strong>₹{{ travel_request.advance_amount }}</strong>
+          {% for advance in advances %}
+          <div class="mt-2 p-2 bg-light rounded small">
+            ₹{{ advance.amount }} — {{ advance.get_status_display }}
+            {% if advance.disbursed_on %}(Disbursed: {{ advance.disbursed_on|date:"d M Y" }}){% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Itinerary -->
+      {% if itinerary %}
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Itinerary" %}</h6></div>
+        <div class="oh-card__body p-0">
+          <table class="table oh-table mb-0">
+            <thead><tr><th>{% trans "Leg" %}</th><th>{% trans "From" %}</th><th>{% trans "To" %}</th><th>{% trans "Mode" %}</th><th>{% trans "Departure" %}</th><th>{% trans "Est. Cost" %}</th></tr></thead>
+            <tbody>
+              {% for leg in itinerary %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ leg.travel_from }}</td>
+                <td>{{ leg.travel_to }}</td>
+                <td>{{ leg.get_mode_of_travel_display }}</td>
+                <td>{{ leg.departure|date:"d M Y, H:i" }}</td>
+                <td>₹{{ leg.estimated_cost }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Right column — approvals & booking -->
+    <div class="col-12 col-lg-4">
+
+      <!-- Approval trail -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Approval Trail" %}</h6></div>
+        <div class="oh-card__body">
+          {% for approval in approvals %}
+          <div class="d-flex align-items-start gap-2 mb-3">
+            <ion-icon name="
+              {% if approval.status == 'approved' %}checkmark-circle-outline
+              {% elif approval.status == 'rejected' %}close-circle-outline
+              {% elif approval.status == 'hold' %}pause-circle-outline
+              {% else %}ellipse-outline{% endif %}"
+              class="fs-5 mt-1
+              {% if approval.status == 'approved' %}text-success
+              {% elif approval.status == 'rejected' %}text-danger
+              {% elif approval.status == 'hold' %}text-warning
+              {% else %}text-muted{% endif %}">
+            </ion-icon>
+            <div>
+              <div class="fw-semibold small">{{ approval.get_level_display }}</div>
+              <div class="text-muted small">{{ approval.get_status_display }}
+                {% if approval.approver %} — {{ approval.approver }}{% endif %}
+              </div>
+              {% if approval.remarks %}<div class="small fst-italic">{{ approval.remarks }}</div>{% endif %}
+              {% if approval.actioned_at %}<div class="text-muted" style="font-size:.75rem;">{{ approval.actioned_at|date:"d M Y, H:i" }}</div>{% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted small">{% trans "No approval records yet." %}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Booking summary -->
+      {% if booking %}
+      <div class="oh-card mb-3">
+        <div class="oh-card__header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">{% trans "Booking" %}</h6>
+          <a href="{% url 'travel-booking-detail' booking.pk %}" class="oh-btn oh-btn--sm oh-btn--light">{% trans "View" %}</a>
+        </div>
+        <div class="oh-card__body">
+          <div class="row g-1 small">
+            <div class="col-6 text-muted">{% trans "PNR" %}</div><div class="col-6"><strong>{{ booking.pnr|default:"Pending" }}</strong></div>
+            <div class="col-6 text-muted">{% trans "Ticket #" %}</div><div class="col-6">{{ booking.ticket_number|default:"—" }}</div>
+            <div class="col-6 text-muted">{% trans "Vendor" %}</div><div class="col-6">{{ booking.vendor|default:"—" }}</div>
+            <div class="col-6 text-muted">{% trans "Cost" %}</div><div class="col-6">₹{{ booking.total_cost }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Expense claims -->
+      {% if claims %}
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Expense Claims" %}</h6></div>
+        <div class="oh-card__body">
+          {% for claim in claims %}
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="small">
+              <a href="{% url 'travel-expense-detail' claim.pk %}">{% trans "Claim" %} #{{ claim.pk }}</a><br>
+              <span class="text-muted">₹{{ claim.total_claimed }} — {{ claim.get_status_display }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Rejection reason -->
+      {% if travel_request.rejection_reason %}
+      <div class="oh-card oh-card--danger mb-3">
+        <div class="oh-card__header"><h6 class="mb-0 text-danger">{% trans "Rejection Reason" %}</h6></div>
+        <div class="oh-card__body">{{ travel_request.rejection_reason }}</div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

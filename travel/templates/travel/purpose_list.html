@@ -1,0 +1,70 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+    <!-- List -->
+    <div class="col-12 col-md-8">
+      <div class="oh-card">
+        <div class="oh-card__body p-0">
+          <table class="table oh-table mb-0">
+            <thead><tr><th>{% trans "Purpose" %}</th><th>{% trans "Description" %}</th><th>{% trans "Actions" %}</th></tr></thead>
+            <tbody>
+              {% for purpose in purposes %}
+              <tr>
+                <td><strong>{{ purpose.name }}</strong></td>
+                <td>{{ purpose.description|default:"—" }}</td>
+                <td>
+                  <a href="{% url 'travel-purpose-delete' purpose.pk %}"
+                     class="oh-btn oh-btn--danger oh-btn--sm"
+                     onclick="return confirm('{% trans "Delete this purpose?" %}')">{% trans "Delete" %}</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-muted py-4">{% trans "No purposes defined yet." %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add form -->
+    <div class="col-12 col-md-4">
+      <div class="oh-card">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Add Purpose" %}</h6></div>
+        <div class="oh-card__body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="oh-label">{{ form.name.label }}</label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="oh-error">{{ form.name.errors }}</div>{% endif %}
+            </div>
+            <div class="mb-3">
+              <label class="oh-label">{{ form.description.label }}</label>
+              {{ form.description }}
+            </div>
+            <button type="submit" class="oh-btn oh-btn--primary w-100">{% trans "Add" %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <div class="oh-titlebar d-flex align-items-center justify-content-between mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+    <a href="{% url 'travel-expense-create' %}" class="oh-btn oh-btn--primary">
+      <ion-icon name="add-outline" class="me-1"></ion-icon> {% trans "New Claim" %}
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Filters (all-claims view only) -->
+  {% if filter %}
+  <div class="oh-card mb-3">
+    <div class="oh-card__body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">{{ filter.form.employee.label_tag }} {{ filter.form.employee }}</div>
+        <div class="col-6 col-md-2">{{ filter.form.claim_date__gte.label_tag }} {{ filter.form.claim_date__gte }}</div>
+        <div class="col-6 col-md-2">{{ filter.form.claim_date__lte.label_tag }} {{ filter.form.claim_date__lte }}</div>
+        <div class="col-6 col-md-2">
+          <button type="submit" class="oh-btn oh-btn--primary w-100">{% trans "Filter" %}</button>
+        </div>
+        <div class="col-6 col-md-2">
+          <a href="{% url 'travel-expense-list' %}" class="oh-btn oh-btn--secondary w-100">{% trans "Clear" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="oh-card">
+    <div class="oh-card__body p-0">
+      <div class="table-responsive">
+        <table class="table oh-table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              {% if not my_view %}<th>{% trans "Employee" %}</th>{% endif %}
+              <th>{% trans "Claim Date" %}</th>
+              <th>{% trans "Travel Request" %}</th>
+              <th>{% trans "Total Claimed" %}</th>
+              <th>{% trans "Total Approved" %}</th>
+              <th>{% trans "Advance Adj." %}</th>
+              <th>{% trans "Net Payable" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th>{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for claim in claims %}
+            <tr>
+              <td>{{ claim.pk }}</td>
+              {% if not my_view %}<td>{{ claim.employee }}</td>{% endif %}
+              <td>{{ claim.claim_date|date:"d M Y" }}</td>
+              <td>
+                {% if claim.travel_request %}
+                  <a href="{% url 'travel-request-detail' claim.travel_request.pk %}">#{{ claim.travel_request.pk }}</a>
+                {% else %}—{% endif %}
+              </td>
+              <td>₹{{ claim.total_claimed }}</td>
+              <td>₹{{ claim.total_approved }}</td>
+              <td>₹{{ claim.advance_adjusted }}</td>
+              <td><strong>₹{{ claim.net_payable }}</strong></td>
+              <td>
+                <span class="oh-badge
+                  {% if claim.status == 'paid' %}oh-badge--success
+                  {% elif claim.status == 'approved' %}oh-badge--info
+                  {% elif claim.status == 'rejected' %}oh-badge--danger
+                  {% elif claim.status == 'pending' %}oh-badge--warning
+                  {% else %}oh-badge--secondary{% endif %}">
+                  {{ claim.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <a href="{% url 'travel-expense-detail' claim.pk %}" class="oh-btn oh-btn--light oh-btn--sm">{% trans "View" %}</a>
+                {% if claim.status == 'draft' %}
+                  <a href="{% url 'travel-expense-update' claim.pk %}" class="oh-btn oh-btn--secondary oh-btn--sm">{% trans "Edit" %}</a>
+                  <a href="{% url 'travel-expense-submit' claim.pk %}"
+                     class="oh-btn oh-btn--primary oh-btn--sm"
+                     onclick="return confirm('{% trans "Submit this claim for approval?" %}')">{% trans "Submit" %}</a>
+                {% endif %}
+                {% if claim.status == 'pending' and perms.travel.view_all_travelrequest %}
+                  <a href="{% url 'travel-expense-approve' claim.pk %}" class="oh-btn oh-btn--warning oh-btn--sm">{% trans "Approve" %}</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10" class="text-center py-5 text-muted">{% trans "No expense claims found." %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

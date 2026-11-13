@@ -1,0 +1,60 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4" style="max-width: 700px;">
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+    <p class="text-muted">{% trans "Approval level" %}: <strong>{{ level|upper }}</strong></p>
+  </div>
+
+  <!-- Request summary -->
+  <div class="oh-card mb-4">
+    <div class="oh-card__header"><h6 class="mb-0">{% trans "Request Summary" %}</h6></div>
+    <div class="oh-card__body">
+      <div class="row g-2">
+        <div class="col-6"><span class="text-muted small">{% trans "Employee" %}</span><br><strong>{{ travel_request.employee_name }}</strong></div>
+        <div class="col-6"><span class="text-muted small">{% trans "Department" %}</span><br>{{ travel_request.department }}</div>
+        <div class="col-6"><span class="text-muted small">{% trans "Destination" %}</span><br>{{ travel_request.travel_from }} → {{ travel_request.travel_to }}</div>
+        <div class="col-6"><span class="text-muted small">{% trans "Departure" %}</span><br>{{ travel_request.departure_date|date:"d M Y" }}</div>
+        <div class="col-6"><span class="text-muted small">{% trans "Purpose" %}</span><br>{{ travel_request.purpose }}</div>
+        <div class="col-6"><span class="text-muted small">{% trans "Type / Class" %}</span><br>{{ travel_request.get_travel_type_display }} / {{ travel_request.get_travel_class_display }}</div>
+        {% if travel_request.advance_required %}
+        <div class="col-6"><span class="text-muted small">{% trans "Advance Requested" %}</span><br>₹{{ travel_request.advance_amount }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Action form -->
+  <div class="oh-card">
+    <div class="oh-card__header"><h6 class="mb-0">{% trans "Your Decision" %}</h6></div>
+    <div class="oh-card__body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="oh-label">{{ form.action.label }}</label>
+          <div class="d-flex gap-3">
+            {% for radio in form.action %}
+              <div class="form-check">
+                {{ radio.tag }}
+                <label class="form-check-label oh-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="oh-label">{{ form.remarks.label }}</label>
+          {{ form.remarks }}
+          {% if form.remarks.errors %}<div class="oh-error">{{ form.remarks.errors }}</div>{% endif %}
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="oh-btn oh-btn--primary">{% trans "Submit Decision" %}</button>
+          <a href="{% url 'travel-pending-approvals' %}" class="oh-btn oh-btn--secondary">{% trans "Back" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

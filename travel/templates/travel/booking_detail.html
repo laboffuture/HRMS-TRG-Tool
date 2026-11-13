@@ -1,0 +1,134 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <div class="oh-titlebar d-flex align-items-center justify-content-between mb-4">
+    <h4 class="oh-titlebar__title">{{ title }} #{{ booking.pk }}</h4>
+    <div class="d-flex gap-2">
+      <a href="{% url 'travel-booking-update' booking.pk %}" class="oh-btn oh-btn--secondary oh-btn--sm">{% trans "Edit Booking" %}</a>
+      <a href="{% url 'travel-invoice-create' booking.pk %}" class="oh-btn oh-btn--primary oh-btn--sm">{% trans "+ Invoice" %}</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+
+      <!-- Ticket -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Ticket Information" %}</h6></div>
+        <div class="oh-card__body">
+          <div class="row g-2">
+            <div class="col-6"><span class="text-muted small">{% trans "Employee" %}</span><br><strong>{{ booking.travel_request.employee_name }}</strong></div>
+            <div class="col-6"><span class="text-muted small">{% trans "Destination" %}</span><br>{{ booking.travel_request.travel_from }} → {{ booking.travel_request.travel_to }}</div>
+            <div class="col-6"><span class="text-muted small">{% trans "PNR" %}</span><br><strong class="text-primary">{{ booking.pnr|default:"Pending" }}</strong></div>
+            <div class="col-6"><span class="text-muted small">{% trans "Ticket #" %}</span><br>{{ booking.ticket_number|default:"—" }}</div>
+            <div class="col-6"><span class="text-muted small">{% trans "Vendor" %}</span><br>{{ booking.vendor|default:"—" }}</div>
+            <div class="col-6"><span class="text-muted small">{% trans "Vendor Invoice Ref" %}</span><br>{{ booking.vendor_invoice_ref|default:"—" }}</div>
+            <div class="col-4"><span class="text-muted small">{% trans "Ticket Cost" %}</span><br>₹{{ booking.ticket_cost }}</div>
+            <div class="col-4"><span class="text-muted small">{% trans "Service Charge" %}</span><br>₹{{ booking.service_charge }}</div>
+            <div class="col-4"><span class="text-muted small">{% trans "Total" %}</span><br><strong>₹{{ booking.total_cost }}</strong></div>
+            <div class="col-6"><span class="text-muted small">{% trans "Booked By" %}</span><br>{{ booking.booked_by|default:"—" }}</div>
+            <div class="col-6"><span class="text-muted small">{% trans "Booked On" %}</span><br>{{ booking.booked_on|date:"d M Y, H:i"|default:"—" }}</div>
+            {% if booking.e_ticket %}<div class="col-12"><a href="{{ booking.e_ticket.url }}" target="_blank" class="oh-btn oh-btn--light oh-btn--sm"><ion-icon name="document-outline" class="me-1"></ion-icon>{% trans "Download E-Ticket" %}</a></div>{% endif %}
+            {% if booking.notes %}<div class="col-12"><span class="text-muted small">{% trans "Notes" %}</span><br>{{ booking.notes }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Hotel Bookings -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Hotel Bookings" %}</h6></div>
+        <div class="oh-card__body">
+          {% for hotel in hotels %}
+          <div class="p-3 mb-3 bg-light rounded">
+            <div class="d-flex justify-content-between">
+              <strong>{{ hotel.hotel_name }}</strong>
+              <span class="text-muted small">{{ hotel.nights }} night{{ hotel.nights|pluralize }}</span>
+            </div>
+            <div class="row g-1 mt-1 small">
+              <div class="col-6"><span class="text-muted">{% trans "Check-in" %}</span>: {{ hotel.check_in|date:"d M Y" }}</div>
+              <div class="col-6"><span class="text-muted">{% trans "Check-out" %}</span>: {{ hotel.check_out|date:"d M Y" }}</div>
+              <div class="col-6"><span class="text-muted">{% trans "Room Type" %}</span>: {{ hotel.room_type|default:"—" }}</div>
+              <div class="col-6"><span class="text-muted">{% trans "Cost" %}</span>: ₹{{ hotel.hotel_cost }}</div>
+              <div class="col-6"><span class="text-muted">{% trans "Confirmation #" %}</span>: {{ hotel.confirmation_number|default:"—" }}</div>
+              {% if hotel.voucher %}<div class="col-6"><a href="{{ hotel.voucher.url }}" target="_blank">{% trans "Voucher" %}</a></div>{% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted small mb-0">{% trans "No hotel bookings yet." %}</p>
+          {% endfor %}
+
+          <!-- Add hotel form -->
+          <hr>
+          <h6 class="small fw-semibold mb-2">{% trans "Add Hotel Booking" %}</h6>
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-2">
+              <div class="col-12 col-md-6">{{ hotel_form.hotel_name.label_tag }} {{ hotel_form.hotel_name }}</div>
+              <div class="col-12 col-md-6">{{ hotel_form.contact_number.label_tag }} {{ hotel_form.contact_number }}</div>
+              <div class="col-12">{{ hotel_form.hotel_address.label_tag }} {{ hotel_form.hotel_address }}</div>
+              <div class="col-12 col-md-4">{{ hotel_form.confirmation_number.label_tag }} {{ hotel_form.confirmation_number }}</div>
+              <div class="col-6 col-md-4">{{ hotel_form.check_in.label_tag }} {{ hotel_form.check_in }}</div>
+              <div class="col-6 col-md-4">{{ hotel_form.check_out.label_tag }} {{ hotel_form.check_out }}</div>
+              <div class="col-6 col-md-4">{{ hotel_form.room_type.label_tag }} {{ hotel_form.room_type }}</div>
+              <div class="col-6 col-md-4">{{ hotel_form.hotel_cost.label_tag }} {{ hotel_form.hotel_cost }}</div>
+              <div class="col-12 col-md-4">{{ hotel_form.voucher.label_tag }} {{ hotel_form.voucher }}</div>
+            </div>
+            <button type="submit" class="oh-btn oh-btn--primary oh-btn--sm mt-3">{% trans "Add Hotel" %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <!-- Invoices -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">{% trans "Vendor Invoices" %}</h6>
+          <a href="{% url 'travel-invoice-create' booking.pk %}" class="oh-btn oh-btn--sm oh-btn--light">{% trans "+ Add" %}</a>
+        </div>
+        <div class="oh-card__body">
+          {% for inv in invoices %}
+          <div class="p-2 mb-2 border rounded small">
+            <div class="d-flex justify-content-between">
+              <strong>{{ inv.invoice_number|default:"No. Pending" }}</strong>
+              <span class="oh-badge
+                {% if inv.status == 'paid' or inv.status == 'reconciled' %}oh-badge--success
+                {% elif inv.status == 'pv_created' %}oh-badge--info
+                {% else %}oh-badge--warning{% endif %}">
+                {{ inv.get_status_display }}
+              </span>
+            </div>
+            <div>{{ inv.vendor }} — ₹{{ inv.invoice_amount }} + GST ₹{{ inv.gst_amount }}</div>
+            {% if inv.payment_voucher_no %}<div class="text-muted">PV: {{ inv.payment_voucher_no }}</div>{% endif %}
+            <a href="{% url 'travel-invoice-update' inv.pk %}" class="oh-btn oh-btn--light oh-btn--sm mt-1">{% trans "Update" %}</a>
+          </div>
+          {% empty %}
+          <p class="text-muted small mb-0">{% trans "No invoices recorded yet." %}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Travel request link -->
+      <div class="oh-card">
+        <div class="oh-card__body">
+          <a href="{% url 'travel-request-detail' booking.travel_request.pk %}" class="oh-btn oh-btn--secondary w-100">
+            <ion-icon name="arrow-back-outline" class="me-1"></ion-icon>{% trans "Back to Travel Request" %}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

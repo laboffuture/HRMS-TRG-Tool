@@ -1,0 +1,172 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <!-- Page header -->
+  <div class="oh-titlebar d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h4 class="oh-titlebar__title mb-0">{% trans "Travel & Expense" %}</h4>
+      <p class="oh-titlebar__subtitle text-muted mb-0">{% trans "Your travel activity at a glance" %}</p>
+    </div>
+    <a href="{% url 'travel-request-create' %}" class="oh-btn oh-btn--primary">
+      <ion-icon name="add-outline" class="me-1"></ion-icon> {% trans "New Request" %}
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Stats row (managers / HR only) -->
+  {% if stats %}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="oh-card oh-card--sm text-center">
+        <div class="oh-card__number text-primary">{{ stats.total_this_month }}</div>
+        <div class="oh-card__label text-muted small">{% trans "Requests This Month" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="oh-card oh-card--sm text-center">
+        <div class="oh-card__number text-warning">{{ stats.pending_count }}</div>
+        <div class="oh-card__label text-muted small">{% trans "Pending Approval" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="oh-card oh-card--sm text-center">
+        <div class="oh-card__number text-info">{{ stats.booked_count }}</div>
+        <div class="oh-card__label text-muted small">{% trans "Booked" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="oh-card oh-card--sm text-center">
+        <div class="oh-card__number text-success">{{ stats.completed_count }}</div>
+        <div class="oh-card__label text-muted small">{% trans "Completed" %}</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Pending Approvals alert -->
+  {% if pending_approvals_count %}
+  <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+    <ion-icon name="time-outline" class="me-2 fs-5"></ion-icon>
+    <div>
+      <strong>{{ pending_approvals_count }}</strong>
+      {% blocktrans with count=pending_approvals_count %}
+        request{{ count|pluralize }} waiting for your approval.
+      {% endblocktrans %}
+      <a href="{% url 'travel-pending-approvals' %}" class="alert-link ms-2">{% trans "Review now →" %}</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- My Active Requests -->
+  <div class="oh-card mb-4">
+    <div class="oh-card__header d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">{% trans "My Active Requests" %}</h6>
+      <a href="{% url 'travel-my-requests' %}" class="oh-link small">{% trans "View all" %}</a>
+    </div>
+    <div class="oh-card__body p-0">
+      {% if my_requests %}
+      <div class="table-responsive">
+        <table class="table oh-table mb-0">
+          <thead>
+            <tr>
+              <th>{% trans "Destination" %}</th>
+              <th>{% trans "Departure" %}</th>
+              <th>{% trans "Type" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th>{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in my_requests %}
+            <tr>
+              <td><strong>{{ req.travel_to }}</strong><br><small class="text-muted">from {{ req.travel_from }}</small></td>
+              <td>{{ req.departure_date|date:"d M Y" }}</td>
+              <td>{{ req.get_travel_type_display }}</td>
+              <td>
+                <span class="oh-badge
+                  {% if req.status == 'approved' %}oh-badge--success
+                  {% elif req.status == 'rejected' %}oh-badge--danger
+                  {% elif req.status == 'booked' %}oh-badge--info
+                  {% elif req.status == 'draft' %}oh-badge--secondary
+                  {% else %}oh-badge--warning
+                  {% endif %}">
+                  {{ req.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <a href="{% url 'travel-request-detail' req.pk %}" class="oh-btn oh-btn--light oh-btn--sm">
+                  {% trans "View" %}
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <ion-icon name="airplane-outline" style="font-size:3rem;" class="mb-2 d-block"></ion-icon>
+        <p>{% trans "No active travel requests. Planning a trip?" %}</p>
+        <a href="{% url 'travel-request-create' %}" class="oh-btn oh-btn--primary">
+          {% trans "Create Request" %}
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Quick links -->
+  <div class="row g-3">
+    <div class="col-12 col-md-4">
+      <a href="{% url 'travel-my-expense-claims' %}" class="oh-card oh-card--link d-block text-decoration-none">
+        <div class="oh-card__body d-flex align-items-center gap-3 p-3">
+          <ion-icon name="receipt-outline" class="fs-3 text-primary"></ion-icon>
+          <div>
+            <div class="fw-semibold">{% trans "My Expense Claims" %}</div>
+            <div class="text-muted small">{% trans "Submit & track reimbursements" %}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% if perms.travel.book_travelrequest %}
+    <div class="col-12 col-md-4">
+      <a href="{% url 'travel-booking-list' %}" class="oh-card oh-card--link d-block text-decoration-none">
+        <div class="oh-card__body d-flex align-items-center gap-3 p-3">
+          <ion-icon name="ticket-outline" class="fs-3 text-info"></ion-icon>
+          <div>
+            <div class="fw-semibold">{% trans "Travel Bookings" %}</div>
+            <div class="text-muted small">{% trans "Manage PNR & tickets" %}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if perms.travel.add_travelinvoice or perms.travel.view_all_travelrequest %}
+    <div class="col-12 col-md-4">
+      <a href="{% url 'travel-invoice-list' %}" class="oh-card oh-card--link d-block text-decoration-none">
+        <div class="oh-card__body d-flex align-items-center gap-3 p-3">
+          <ion-icon name="document-text-outline" class="fs-3 text-success"></ion-icon>
+          <div>
+            <div class="fw-semibold">{% trans "Travel Invoices" %}</div>
+            <div class="text-muted small">{% trans "Finance reconciliation" %}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

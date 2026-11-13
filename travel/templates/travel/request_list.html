@@ -1,0 +1,103 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <!-- Header -->
+  <div class="oh-titlebar d-flex align-items-center justify-content-between mb-4">
+    <h4 class="oh-titlebar__title mb-0">{{ title }}</h4>
+    {% if not my_view %}
+    <a href="{% url 'travel-request-create' %}" class="oh-btn oh-btn--primary">
+      <ion-icon name="add-outline" class="me-1"></ion-icon> {% trans "New Request" %}
+    </a>
+    {% endif %}
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Filters (HR/manager only) -->
+  {% if filter %}
+  <div class="oh-card mb-3">
+    <div class="oh-card__body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">{{ filter.form.employee.label_tag }} {{ filter.form.employee }}</div>
+        <div class="col-6 col-md-2">{{ filter.form.travel_type.label_tag }} {{ filter.form.travel_type }}</div>
+        <div class="col-6 col-md-2">{{ filter.form.departure_date__gte.label_tag }} {{ filter.form.departure_date__gte }}</div>
+        <div class="col-6 col-md-2">{{ filter.form.departure_date__lte.label_tag }} {{ filter.form.departure_date__lte }}</div>
+        <div class="col-6 col-md-2">{{ filter.form.travel_to.label_tag }} {{ filter.form.travel_to }}</div>
+        <div class="col-12 col-md-1">
+          <button type="submit" class="oh-btn oh-btn--primary w-100">{% trans "Filter" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Table -->
+  <div class="oh-card">
+    <div class="oh-card__body p-0">
+      <div class="table-responsive">
+        <table class="table oh-table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              {% if not my_view %}<th>{% trans "Employee" %}</th>{% endif %}
+              <th>{% trans "From → To" %}</th>
+              <th>{% trans "Departure" %}</th>
+              <th>{% trans "Type" %}</th>
+              <th>{% trans "Class" %}</th>
+              <th>{% trans "Status" %}</th>
+              <th>{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in requests %}
+            <tr>
+              <td>{{ req.pk }}</td>
+              {% if not my_view %}<td>{{ req.employee_name }}<br><small class="text-muted">{{ req.department }}</small></td>{% endif %}
+              <td>{{ req.travel_from }} <ion-icon name="arrow-forward-outline"></ion-icon> {{ req.travel_to }}</td>
+              <td>{{ req.departure_date|date:"d M Y" }}</td>
+              <td>{{ req.get_travel_type_display }}</td>
+              <td>{{ req.get_travel_class_display }}</td>
+              <td>
+                <span class="oh-badge
+                  {% if req.status == 'approved' or req.status == 'completed' %}oh-badge--success
+                  {% elif req.status == 'rejected' or req.status == 'cancelled' %}oh-badge--danger
+                  {% elif req.status == 'booked' %}oh-badge--info
+                  {% elif req.status == 'draft' %}oh-badge--secondary
+                  {% else %}oh-badge--warning{% endif %}">
+                  {{ req.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <a href="{% url 'travel-request-detail' req.pk %}" class="oh-btn oh-btn--light oh-btn--sm">{% trans "View" %}</a>
+                {% if req.status == 'draft' %}
+                  <a href="{% url 'travel-request-update' req.pk %}" class="oh-btn oh-btn--secondary oh-btn--sm">{% trans "Edit" %}</a>
+                  <a href="{% url 'travel-request-submit' req.pk %}" class="oh-btn oh-btn--primary oh-btn--sm"
+                     onclick="return confirm('{% trans "Submit this request for HR review?" %}')">{% trans "Submit" %}</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                {% trans "No travel requests found." %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="oh-card">
+    <div class="oh-card__body p-0">
+      <div class="table-responsive">
+        <table class="table oh-table mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{% trans "Employee" %}</th>
+              <th>{% trans "Destination" %}</th>
+              <th>{% trans "Departure" %}</th>
+              <th>{% trans "Type" %}</th>
+              <th>{% trans "Pending At" %}</th>
+              <th>{% trans "Advance" %}</th>
+              <th>{% trans "Action" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in requests %}
+            <tr>
+              <td>{{ req.pk }}</td>
+              <td>{{ req.employee_name }}<br><small class="text-muted">{{ req.department }}</small></td>
+              <td>{{ req.travel_from }} → {{ req.travel_to }}</td>
+              <td>{{ req.departure_date|date:"d M Y" }}</td>
+              <td>{{ req.get_travel_type_display }}</td>
+              <td>
+                <span class="oh-badge oh-badge--warning">{{ req.get_status_display }}</span>
+              </td>
+              <td>
+                {% if req.advance_required %}
+                  <ion-icon name="cash-outline" class="text-warning"></ion-icon> ₹{{ req.advance_amount }}
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                <a href="{% url 'travel-request-detail' req.pk %}" class="oh-btn oh-btn--light oh-btn--sm">{% trans "View" %}</a>
+                <a href="{% url 'travel-approve-action' req.pk %}" class="oh-btn oh-btn--warning oh-btn--sm">{% trans "Act" %}</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center py-5 text-muted">{% trans "No pending requests." %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

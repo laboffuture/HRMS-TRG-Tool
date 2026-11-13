@@ -1,0 +1,83 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }} — Claim #{{ claim.pk }}</h4>
+    <p class="text-muted">{% trans "Employee" %}: <strong>{{ claim.employee }}</strong> &nbsp;|&nbsp; {% trans "Claimed" %}: <strong>₹{{ claim.total_claimed }}</strong></p>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Line-by-line approval -->
+    <div class="oh-card mb-4">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Review Expense Lines" %}</h6></div>
+      <div class="oh-card__body p-0">
+        <div class="table-responsive">
+          <table class="table oh-table mb-0">
+            <thead>
+              <tr>
+                <th>{% trans "Date" %}</th>
+                <th>{% trans "Type" %}</th>
+                <th>{% trans "Description" %}</th>
+                <th>{% trans "Claimed (₹)" %}</th>
+                <th>{% trans "Approve Amount (₹)" %}</th>
+                <th>{% trans "Receipt" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for detail in details %}
+              <tr>
+                <td>{{ detail.expense_date|date:"d M Y" }}</td>
+                <td>{{ detail.get_expense_type_display }}</td>
+                <td>{{ detail.description }}</td>
+                <td>₹{{ detail.amount_claimed }}</td>
+                <td>
+                  <input type="number" name="approved_{{ detail.pk }}"
+                    value="{{ detail.amount_claimed }}"
+                    min="0" max="{{ detail.amount_claimed }}"
+                    step="0.01" class="oh-input" style="width:120px;">
+                </td>
+                <td>
+                  {% if detail.receipt %}
+                    <a href="{{ detail.receipt.url }}" target="_blank" class="oh-btn oh-btn--light oh-btn--sm">{% trans "View" %}</a>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remarks for rejection -->
+    <div class="oh-card mb-4">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Rejection Remarks" %} ({% trans "required if rejecting" %})</h6></div>
+      <div class="oh-card__body">
+        <textarea name="remarks" class="oh-input w-100" rows="3"
+          placeholder="{% trans 'Enter reason for rejection or any notes...' %}"></textarea>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="d-flex gap-2">
+      <button type="submit" name="action" value="approve" class="oh-btn oh-btn--success">
+        <ion-icon name="checkmark-circle-outline" class="me-1"></ion-icon> {% trans "Approve Claim" %}
+      </button>
+      <button type="submit" name="action" value="pay" class="oh-btn oh-btn--info"
+        onclick="return confirm('{% trans "Mark this claim as paid / reimbursed?" %}')">
+        <ion-icon name="cash-outline" class="me-1"></ion-icon> {% trans "Mark as Paid" %}
+      </button>
+      <button type="submit" name="action" value="reject" class="oh-btn oh-btn--danger">
+        <ion-icon name="close-circle-outline" class="me-1"></ion-icon> {% trans "Reject" %}
+      </button>
+      <a href="{% url 'travel-expense-detail' claim.pk %}" class="oh-btn oh-btn--secondary">{% trans "Back" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

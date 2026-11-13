@@ -1,0 +1,37 @@
+{% load i18n %}
+<div class="flex items-center justify-between gap-3 mb-3">
+    <p class="text-sm text-[#666] mb-0">
+        {% blocktrans count counter=resumes|length %}{{ counter }} resume uploaded{% plural %}{{ counter }} resumes uploaded{% endblocktrans %}
+    </p>
+    <form
+        hx-post="{% url 'add-bulk-resume' %}?rec_id={{rec_id}}"
+        class="add-files-form"
+        hx-encoding="multipart/form-data"
+        data-target="#activitySidebar"
+        hx-swap="innerHTML"
+        hx-target="#bulkResumeUploadBody"
+    >
+        {% csrf_token %}
+        <label for="addFile" class="oh-btn oh-btn--secondary oh-btn--inline mb-0">
+            <ion-icon name="cloud-upload-outline"></ion-icon>
+            {% trans "Upload" %}
+        </label>
+        <input
+            type="file"
+            name="files"
+            class="d-none"
+            accept=".pdf"
+            multiple="true"
+            id="addFile"
+            onchange="submitForm(this)"
+        />
+        <input type="submit" class="d-none add_more_submit" value="save" />
+    </form>
+</div>
+
+<div id="matchingResume" hx-get="{% url 'matching-resumes' rec_id %}" hx-target="#matchingResume" hx-trigger="load">
+    <div class="flex flex-col items-center justify-center gap-2 py-10" role="status">
+        <div class="h-7 w-7 animate-spin rounded-full border-[3px] border-dark-50 border-t-primary-600"></div>
+        <p class="text-sm text-[#666] mb-0">{% trans "Reading resumes..." %}</p>
+    </div>
+</div>

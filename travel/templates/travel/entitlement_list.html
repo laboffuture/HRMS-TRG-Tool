@@ -1,0 +1,86 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+    <p class="text-muted">{% trans "Map each job role to a travel class and maximum advance allowed." %}</p>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+    <!-- Table -->
+    <div class="col-12 col-lg-8">
+      <div class="oh-card">
+        <div class="oh-card__body p-0">
+          <table class="table oh-table mb-0">
+            <thead>
+              <tr>
+                <th>{% trans "Job Role" %}</th>
+                <th>{% trans "Travel Class" %}</th>
+                <th>{% trans "Max Advance (₹)" %}</th>
+                <th>{% trans "Domestic Notice (days)" %}</th>
+                <th>{% trans "International Notice (days)" %}</th>
+                <th>{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ent in entitlements %}
+              <tr>
+                <td><strong>{{ ent.job_role }}</strong></td>
+                <td>
+                  <span class="oh-badge
+                    {% if ent.travel_class == 'first' %}oh-badge--success
+                    {% elif ent.travel_class == 'business' %}oh-badge--info
+                    {% else %}oh-badge--secondary{% endif %}">
+                    {{ ent.get_travel_class_display }}
+                  </span>
+                </td>
+                <td>₹{{ ent.max_advance }}</td>
+                <td>{{ ent.domestic_days_notice }}</td>
+                <td>{{ ent.international_days_notice }}</td>
+                <td>
+                  <a href="{% url 'travel-entitlement-update' ent.pk %}" class="oh-btn oh-btn--secondary oh-btn--sm">{% trans "Edit" %}</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-4">{% trans "No entitlements configured yet." %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add form -->
+    <div class="col-12 col-lg-4">
+      <div class="oh-card">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Add Entitlement" %}</h6></div>
+        <div class="oh-card__body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label class="oh-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="oh-error">{{ field.errors }}</div>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="oh-btn oh-btn--primary w-100">{% trans "Save" %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

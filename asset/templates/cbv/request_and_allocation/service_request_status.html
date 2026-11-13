@@ -1,0 +1,21 @@
+{% load i18n %}
+{% if perms.asset.change_assetassignment %}
+    <div onclick="event.stopPropagation();">
+        <select
+            name="status"
+            hx-post="{{ instance.detail_view_url }}"
+            hx-trigger="change"
+            hx-swap="none"
+            hx-on::after-request="$('#reloadMessagesButton').click(); $('#applyFilter').click();"
+            class="oh-table__editable-input w-100"
+        >
+            {% for value, label in instance.STATUS %}
+                <option value="{{ value }}" {% if value == instance.status %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+{% else %}
+    <div class="flex items-center gap-1.5">
+        {% trans instance.status %}
+    </div>
+{% endif %}

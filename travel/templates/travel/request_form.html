@@ -1,0 +1,148 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <!-- Section 1: Traveller -->
+    <div class="oh-card mb-3">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Traveller Details" %}</h6></div>
+      <div class="oh-card__body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="oh-label">{{ form.employee.label }}</label>
+            {{ form.employee }}
+            {% if form.employee.errors %}<div class="oh-error">{{ form.employee.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="oh-label">{{ form.passport_number.label }}</label>
+            {{ form.passport_number }}
+            <small class="text-muted">{% trans "Required for international travel" %}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Trip Details -->
+    <div class="oh-card mb-3">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Trip Details" %}</h6></div>
+      <div class="oh-card__body">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.travel_type.label }}</label>
+            {{ form.travel_type }}
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.mode_of_travel.label }}</label>
+            {{ form.mode_of_travel }}
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.travel_class.label }}</label>
+            {{ form.travel_class }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="oh-label">{{ form.travel_from.label }}</label>
+            {{ form.travel_from }}
+            {% if form.travel_from.errors %}<div class="oh-error">{{ form.travel_from.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="oh-label">{{ form.travel_to.label }}</label>
+            {{ form.travel_to }}
+            {% if form.travel_to.errors %}<div class="oh-error">{{ form.travel_to.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="oh-label">{{ form.departure_date.label }}</label>
+            {{ form.departure_date }}
+            {% if form.departure_date.errors %}<div class="oh-error">{{ form.departure_date.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="oh-label">{{ form.return_date.label }}</label>
+            {{ form.return_date }}
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="oh-label">{{ form.purpose.label }}</label>
+            {{ form.purpose }}
+            {% if form.purpose.errors %}<div class="oh-error">{{ form.purpose.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="oh-label">{{ form.description.label }}</label>
+            {{ form.description }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Lodging -->
+    <div class="oh-card mb-3">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Lodging" %}</h6></div>
+      <div class="oh-card__body">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="form-check">
+              {{ form.lodging_required }}
+              <label class="form-check-label oh-label" for="{{ form.lodging_required.id_for_label }}">
+                {{ form.lodging_required.label }}
+              </label>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.preferred_location.label }}</label>
+            {{ form.preferred_location }}
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="oh-label">{{ form.check_in_date.label }}</label>
+            {{ form.check_in_date }}
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="oh-label">{{ form.check_out_date.label }}</label>
+            {{ form.check_out_date }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Advance -->
+    <div class="oh-card mb-4">
+      <div class="oh-card__header"><h6 class="mb-0">{% trans "Cash Advance" %}</h6></div>
+      <div class="oh-card__body">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="form-check">
+              {{ form.advance_required }}
+              <label class="form-check-label oh-label" for="{{ form.advance_required.id_for_label }}">
+                {{ form.advance_required.label }}
+              </label>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="oh-label">{{ form.advance_amount.label }}</label>
+            {{ form.advance_amount }}
+            {% if form.advance_amount.errors %}<div class="oh-error">{{ form.advance_amount.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="oh-btn oh-btn--primary">{% trans "Save Request" %}</button>
+      <a href="{% url 'travel-my-requests' %}" class="oh-btn oh-btn--secondary">{% trans "Cancel" %}</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

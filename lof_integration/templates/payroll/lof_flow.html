@@ -1,0 +1,206 @@
+{% extends 'index.html' %}
+{% block content %}
+{% load static i18n %}
+
+<style>
+    .lof-flow-wrap {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+    }
+    .lof-flow-head {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+    .lof-flow-head h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 6px;
+    }
+    .lof-flow-head p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    .lof-stage {
+        position: relative;
+        border-radius: 12px;
+        padding: 22px 24px;
+        background: #eef2fb;
+        border: 1px solid transparent;
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+    .lof-stage:hover {
+        box-shadow: 0 6px 20px rgba(30, 58, 138, 0.12);
+        transform: translateY(-1px);
+    }
+    .lof-stage__title {
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 6px;
+    }
+    .lof-stage__items {
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.88rem;
+        margin: 0;
+    }
+    .lof-stage__meta {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+    }
+    .lof-badge {
+        background: #ffffff;
+        border: 1px solid #d7deeb;
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+    }
+    .lof-link {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #1e40af;
+        text-decoration: none;
+    }
+    .lof-link:hover { text-decoration: underline; }
+    .lof-arrow {
+        text-align: center;
+        color: #9aa4b5;
+        font-size: 1.1rem;
+        line-height: 1;
+        padding: 8px 0;
+    }
+    /* statutory stage (step 5) */
+    .lof-stage--statutory {
+        background: #fdf3e7;
+        border-color: #e7b878;
+    }
+    .lof-chips {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 14px;
+    }
+    .lof-chip {
+        background: #f7e4cd;
+        border-radius: 8px;
+        padding: 14px;
+        text-align: center;
+        font-weight: 700;
+        color: #92400e;
+        font-size: 0.95rem;
+    }
+    /* approval chain (step 6) */
+    .lof-pipeline {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+    }
+    .lof-pipe-step {
+        background: #ffffff;
+        border: 1px solid #d7deeb;
+        border-radius: 8px;
+        padding: 8px 14px;
+        text-align: center;
+        min-width: 92px;
+    }
+    .lof-pipe-step small {
+        display: block;
+        color: #6b7280;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+    .lof-pipe-step span {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    .lof-pipe-sep {
+        align-self: center;
+        color: #9aa4b5;
+        font-weight: 700;
+    }
+    /* disbursement stage (step 7) */
+    .lof-stage--disburse {
+        background: #e7f6ec;
+        border-color: #9ad3af;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .lof-flow-head h1, .lof-stage__title { color: #e5e7eb; }
+        .lof-flow-head p, .lof-stage__items { color: #9aa4b5; }
+        .lof-stage { background: #1f2a44; }
+        .lof-badge, .lof-pipe-step { background: #0f1629; border-color: #33406a; color: #cbd5e1; }
+        .lof-pipe-step span { color: #e5e7eb; }
+        .lof-link { color: #93b4ff; }
+        .lof-stage--statutory { background: #3a2c17; border-color: #8a6324; }
+        .lof-chip { background: #4a3a1f; color: #f5d9a8; }
+        .lof-stage--disburse { background: #163020; border-color: #2f6a45; }
+    }
+</style>
+
+<main :class="sidebarOpen ? 'oh-main__sidebar-visible' : ''">
+    <div class="oh-wrapper">
+        <div class="lof-flow-wrap">
+            <div class="lof-flow-head">
+                <h1>{% trans "Payroll Flow" %}</h1>
+                <p>{% trans "The LOF end-to-end payroll pipeline. Each stage links to its module." %}</p>
+            </div>
+
+            {% for stage in stages %}
+            <div class="lof-stage
+                        {% if stage.tone == 'statutory' %}lof-stage--statutory{% endif %}
+                        {% if stage.tone == 'disburse' %}lof-stage--disburse{% endif %}">
+                <h2 class="lof-stage__title">{{ stage.num }}. {{ stage.title }}</h2>
+                <p class="lof-stage__items">{{ stage.items }}</p>
+
+                {% if stage.chips %}
+                <div class="lof-chips">
+                    {% for chip in stage.chips %}
+                    <div class="lof-chip">{{ chip }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if stage.pipeline %}
+                <div class="lof-pipeline">
+                    {% for p in stage.pipeline %}
+                    <div class="lof-pipe-step">
+                        <small>{{ p.label }}</small>
+                        <span>{{ p.count }}</span>
+                    </div>
+                    {% if not forloop.last %}<div class="lof-pipe-sep">&rarr;</div>{% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="lof-stage__meta">
+                    {% if stage.metric is not None %}
+                    <span class="lof-badge">{{ stage.metric }} {{ stage.metric_label }}</span>
+                    {% endif %}
+                    <a class="lof-link" href="{% url stage.url %}">{{ stage.action }} &rarr;</a>
+                </div>
+            </div>
+
+            {% if not forloop.last %}
+            <div class="lof-arrow">&darr;</div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</main>
+
+{% endblock %}

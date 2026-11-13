@@ -1,0 +1,119 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4">
+
+  <div class="oh-titlebar d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h4 class="oh-titlebar__title mb-0">{% trans "Expense Claim" %} #{{ claim.pk }}</h4>
+      <span class="oh-badge
+        {% if claim.status == 'paid' %}oh-badge--success
+        {% elif claim.status == 'approved' %}oh-badge--info
+        {% elif claim.status == 'rejected' %}oh-badge--danger
+        {% elif claim.status == 'pending' %}oh-badge--warning
+        {% else %}oh-badge--secondary{% endif %}">
+        {{ claim.get_status_display }}
+      </span>
+    </div>
+    <div class="d-flex gap-2">
+      {% if is_owner and claim.status == 'draft' %}
+        <a href="{% url 'travel-expense-update' claim.pk %}" class="oh-btn oh-btn--secondary oh-btn--sm">{% trans "Edit" %}</a>
+        <a href="{% url 'travel-expense-submit' claim.pk %}"
+           class="oh-btn oh-btn--primary oh-btn--sm"
+           onclick="return confirm('{% trans "Submit this claim for approval?" %}')">{% trans "Submit" %}</a>
+        <a href="{% url 'travel-expense-delete' claim.pk %}"
+           class="oh-btn oh-btn--danger oh-btn--sm"
+           onclick="return confirm('{% trans "Delete this claim?" %}')">{% trans "Delete" %}</a>
+      {% endif %}
+      {% if can_hr and claim.status == 'pending' %}
+        <a href="{% url 'travel-expense-approve' claim.pk %}" class="oh-btn oh-btn--warning oh-btn--sm">{% trans "Review & Approve" %}</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-8">
+
+      <!-- Summary -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Summary" %}</h6></div>
+        <div class="oh-card__body">
+          <div class="row g-2">
+            <div class="col-6"><span class="text-muted small">{% trans "Employee" %}</span><br><strong>{{ claim.employee }}</strong></div>
+            <div class="col-6"><span class="text-muted small">{% trans "Claim Date" %}</span><br>{{ claim.claim_date|date:"d M Y" }}</div>
+            {% if claim.travel_request %}
+            <div class="col-6"><span class="text-muted small">{% trans "Travel Request" %}</span><br><a href="{% url 'travel-request-detail' claim.travel_request.pk %}">#{{ claim.travel_request.pk }} — {{ claim.travel_request.travel_to }}</a></div>
+            {% endif %}
+            {% if claim.approved_by %}
+            <div class="col-6"><span class="text-muted small">{% trans "Approved By" %}</span><br>{{ claim.approved_by }}</div>
+            {% endif %}
+            {% if claim.remarks %}<div class="col-12"><span class="text-muted small">{% trans "Remarks" %}</span><br>{{ claim.remarks }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Expense lines -->
+      <div class="oh-card mb-3">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Expense Lines" %}</h6></div>
+        <div class="oh-card__body p-0">
+          <div class="table-responsive">
+            <table class="table oh-table mb-0">
+              <thead>
+                <tr>
+                  <th>{% trans "Date" %}</th>
+                  <th>{% trans "Type" %}</th>
+                  <th>{% trans "Description" %}</th>
+                  <th>{% trans "Claimed (₹)" %}</th>
+                  <th>{% trans "Approved (₹)" %}</th>
+                  <th>{% trans "Billable" %}</th>
+                  <th>{% trans "Receipt" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for detail in details %}
+                <tr>
+                  <td>{{ detail.expense_date|date:"d M Y" }}</td>
+                  <td>{{ detail.get_expense_type_display }}</td>
+                  <td>{{ detail.description }}</td>
+                  <td>{{ detail.amount_claimed }}</td>
+                  <td>{{ detail.amount_approved }}</td>
+                  <td>{% if detail.billable %}<ion-icon name="checkmark-circle-outline" class="text-success"></ion-icon>{% else %}<ion-icon name="close-circle-outline" class="text-muted"></ion-icon>{% endif %}</td>
+                  <td>{% if detail.receipt %}<a href="{{ detail.receipt.url }}" target="_blank" class="oh-btn oh-btn--light oh-btn--sm">{% trans "View" %}</a>{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-3">{% trans "No expense lines." %}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <!-- Financials -->
+      <div class="oh-card">
+        <div class="oh-card__header"><h6 class="mb-0">{% trans "Financial Summary" %}</h6></div>
+        <div class="oh-card__body">
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted">{% trans "Total Claimed" %}</td><td class="text-end">₹{{ claim.total_claimed }}</td></tr>
+            <tr><td class="text-muted">{% trans "Total Approved" %}</td><td class="text-end">₹{{ claim.total_approved }}</td></tr>
+            <tr><td class="text-muted">{% trans "Advance Adjusted" %}</td><td class="text-end text-danger">— ₹{{ claim.advance_adjusted }}</td></tr>
+            <tr class="table-light fw-bold"><td>{% trans "Net Payable" %}</td><td class="text-end text-success">₹{{ claim.net_payable }}</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

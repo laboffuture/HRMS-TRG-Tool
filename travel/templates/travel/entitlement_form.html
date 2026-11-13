@@ -1,0 +1,29 @@
+{% extends 'index.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="oh-wrapper mb-4" style="max-width:600px;">
+  <div class="oh-titlebar mb-4">
+    <h4 class="oh-titlebar__title">{{ title }}</h4>
+  </div>
+  <div class="oh-card">
+    <div class="oh-card__body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-3">
+          <label class="oh-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="oh-error">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="d-flex gap-2">
+          <button type="submit" class="oh-btn oh-btn--primary">{% trans "Update" %}</button>
+          <a href="{% url 'travel-entitlement-list' %}" class="oh-btn oh-btn--secondary">{% trans "Cancel" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
